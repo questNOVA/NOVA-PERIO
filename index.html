@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Questionario NFFQ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --green: #2d6a4f;
+    --green-light: #e8f5ee;
+    --green-mid: #52b788;
+    --green-pale: #f0faf4;
+    --text: #1a2e22;
+    --text-muted: #5a7a66;
+    --border: #c7e0d0;
+    --white: #ffffff;
+    --warn: #e63946;
+    --warn-bg: #fff0f1;
+    --radius: 10px;
+    --shadow: 0 2px 12px rgba(45,106,79,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Georgia', serif;
+    background: #f4faf6;
+    color: var(--text);
+    min-height: 100vh;
+  }
+  header {
+    background: var(--green);
+    color: white;
+    padding: 28px 32px 22px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+  }
+  header h1 { font-size: 1.35rem; font-weight: normal; letter-spacing: 0.5px; }
+  header p { font-size: 0.82rem; opacity: 0.75; margin-top: 3px; font-family: sans-serif; }
+  .progress-bar-wrap { background: rgba(255,255,255,0.18); border-radius: 20px; height: 7px; margin-top: 12px; }
+  .progress-bar { background: var(--green-mid); border-radius: 20px; height: 7px; transition: width 0.4s ease; }
+  .progress-label { font-size: 0.78rem; opacity: 0.85; margin-top: 5px; font-family: sans-serif; }
+
+  .container { max-width: 760px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  .section-block {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 28px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .section-title {
+    background: var(--green-light);
+    padding: 14px 22px;
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--green);
+    border-bottom: 1px solid var(--border);
+    letter-spacing: 0.3px;
+  }
+  .section-body { padding: 18px 22px; }
+
+  .q-block { margin-bottom: 22px; }
+  .q-label {
+    display: block;
+    font-size: 0.93rem;
+    margin-bottom: 8px;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .q-label .req { color: var(--warn); margin-left: 2px; }
+
+  input[type="number"], input[type="text"], select, textarea {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    padding: 9px 13px;
+    font-size: 0.92rem;
+    color: var(--text);
+    background: var(--white);
+    font-family: sans-serif;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  input[type="number"]:focus, input[type="text"]:focus, select:focus, textarea:focus {
+    border-color: var(--green-mid);
+    box-shadow: 0 0 0 3px rgba(82,183,136,0.15);
+  }
+  input[type="number"] { max-width: 120px; }
+
+  .radio-group, .checkbox-group {
+    display: flex; flex-direction: column; gap: 7px;
+  }
+  .radio-group label, .checkbox-group label {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.9rem; cursor: pointer; padding: 6px 10px;
+    border-radius: 6px; border: 1px solid transparent;
+    transition: background 0.15s, border-color 0.15s;
+    font-family: sans-serif;
+  }
+  .radio-group label:hover, .checkbox-group label:hover {
+    background: var(--green-pale); border-color: var(--border);
+  }
+  input[type="radio"], input[type="checkbox"] {
+    accent-color: var(--green); width: 16px; height: 16px; flex-shrink: 0;
+  }
+
+  /* Food frequency question card */
+  .food-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 18px;
+    overflow: hidden;
+  }
+  .food-card-header {
+    background: var(--green-pale);
+    padding: 11px 16px;
+    font-size: 0.92rem;
+    font-weight: bold;
+    color: var(--green);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .food-num {
+    background: var(--green);
+    color: white;
+    font-size: 0.72rem;
+    border-radius: 50%;
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-family: sans-serif;
+  }
+  .food-card-body { padding: 14px 16px; }
+
+  .freq-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .freq-grid label {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.83rem; cursor: pointer; padding: 5px 9px;
+    border-radius: 6px; border: 1px solid transparent;
+    font-family: sans-serif; color: var(--text);
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .freq-grid label:hover { background: var(--green-pale); border-color: var(--border); }
+
+  .daily-input { margin: 8px 0 12px; display: none; }
+  .daily-input.show { display: flex; align-items: center; gap: 10px; }
+  .daily-input label { font-size: 0.84rem; color: var(--text-muted); font-family: sans-serif; white-space: nowrap; }
+  .daily-input input { max-width: 80px; }
+
+  .portion-label {
+    font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;
+    font-family: sans-serif; padding: 5px 9px;
+    background: var(--green-pale); border-radius: 5px;
+    border-left: 3px solid var(--green-mid);
+    line-height: 1.4;
+  }
+  .portion-grid {
+    display: flex; flex-wrap: wrap; gap: 7px;
+  }
+  .portion-grid label {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.83rem; cursor: pointer; padding: 5px 12px;
+    border-radius: 20px; border: 1.5px solid var(--border);
+    font-family: sans-serif; color: var(--text);
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .portion-grid label:hover { background: var(--green-pale); border-color: var(--green-mid); }
+  .portion-grid input[type="radio"] { display: none; }
+  .portion-grid label.selected {
+    background: var(--green); border-color: var(--green); color: white;
+  }
+
+  .nav-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex; justify-content: space-between; align-items: center;
+    z-index: 200;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+  }
+  .btn {
+    padding: 10px 28px; border-radius: 7px; border: none;
+    font-size: 0.93rem; cursor: pointer; font-family: sans-serif;
+    font-weight: bold; transition: transform 0.1s, opacity 0.2s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-prev { background: var(--green-light); color: var(--green); }
+  .btn-next { background: var(--green); color: white; }
+  .btn-export { background: #1a6b3a; color: white; font-size: 1rem; padding: 11px 32px; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .step-indicator {
+    font-size: 0.83rem; color: var(--text-muted);
+    font-family: sans-serif;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .error-msg {
+    background: var(--warn-bg);
+    border: 1px solid #f5c6cb;
+    border-radius: 7px;
+    padding: 12px 16px;
+    margin-bottom: 18px;
+    font-size: 0.87rem;
+    color: var(--warn);
+    font-family: sans-serif;
+    display: none;
+  }
+  .error-msg.show { display: block; }
+
+  .success-screen {
+    text-align: center; padding: 60px 20px;
+  }
+  .success-screen .check {
+    width: 72px; height: 72px; background: var(--green);
+    border-radius: 50%; margin: 0 auto 24px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.2rem; color: white;
+  }
+  .success-screen h2 { color: var(--green); margin-bottom: 10px; font-size: 1.5rem; }
+  .success-screen p { color: var(--text-muted); font-size: 0.95rem; font-family: sans-serif; margin-bottom: 30px; }
+
+  .categoria-nav {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px;
+  }
+  .cat-btn {
+    padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--border);
+    font-size: 0.8rem; cursor: pointer; background: white;
+    font-family: sans-serif; color: var(--text-muted);
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .cat-btn.done { background: var(--green-light); border-color: var(--green-mid); color: var(--green); }
+  .cat-btn.active { background: var(--green); border-color: var(--green); color: white; }
+
+  @media (max-width: 540px) {
+    .freq-grid { grid-template-columns: 1fr 1fr; }
+    header { padding: 18px 16px 14px; }
+    .container { padding: 20px 12px 80px; }
+    .section-body { padding: 14px 14px; }
+    .food-card-body { padding: 12px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Nova Food Frequency Questionnaire (NFFQ)</h1>
+  <p>Questionario alimentare e salute orale</p>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progressBar" style="width:0%"></div>
+  </div>
+  <div class="progress-label" id="progressLabel">Sezione 1 di 3</div>
+</header>
+
+<div class="container">
+
+  <!-- PAGE 1: SOCIODEMOGRAFICHE -->
+  <div class="page active" id="page1">
+    <div class="error-msg" id="err1"></div>
+    <div class="section-block">
+      <div class="section-title">Sezione 1 — Dati Anagrafici e Sociodemografici</div>
+      <div class="section-body">
+
+        <div class="q-block">
+          <label class="q-label">Nome e Cognome <span class="req">*</span></label>
+          <input type="text" id="nominativo" placeholder="es. Mario Rossi" autocomplete="name">
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Indirizzo email <span class="req">*</span></label>
+          <input type="text" id="email" placeholder="es. mario.rossi@email.com" autocomplete="email">
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Età (anni) <span class="req">*</span></label>
+          <input type="number" id="eta" min="18" max="110" placeholder="es. 35">
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Sesso <span class="req">*</span></label>
+          <div class="radio-group" id="sesso">
+            <label><input type="radio" name="sesso" value="Maschio"> Maschio</label>
+            <label><input type="radio" name="sesso" value="Femmina"> Femmina</label>
+            <label><input type="radio" name="sesso" value="Altro/Non binario"> Altro / Non binario</label>
+            <label><input type="radio" name="sesso" value="Preferisco non rispondere"> Preferisco non rispondere</label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Stato civile</label>
+          <div class="radio-group" id="stato_civile">
+            <label><input type="radio" name="stato_civile" value="Sposato/a"> Sposato/a</label>
+            <label><input type="radio" name="stato_civile" value="Mai sposato/a"> Mai sposato/a</label>
+            <label><input type="radio" name="stato_civile" value="Single"> Single</label>
+            <label><input type="radio" name="stato_civile" value="Divorziato/a"> Divorziato/a</label>
+            <label><input type="radio" name="stato_civile" value="Vedovo/a"> Vedovo/a</label>
+            <label><input type="radio" name="stato_civile" value="Convivente (partner non sposato)"> Convivente (partner non sposato)</label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Nazionalità / Paese di origine</label>
+          <input type="text" id="nazionalita" placeholder="es. Italiana">
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Area di residenza (Italia)</label>
+          <div class="radio-group" id="residenza">
+            <label><input type="radio" name="residenza" value="Nord Italia"> Nord Italia</label>
+            <label><input type="radio" name="residenza" value="Centro Italia"> Centro Italia</label>
+            <label><input type="radio" name="residenza" value="Sud Italia / Isole"> Sud Italia / Isole</label>
+            <label><input type="radio" name="residenza" value="Estero"> Estero</label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Livello di istruzione</label>
+          <div class="radio-group" id="istruzione">
+            <label><input type="radio" name="istruzione" value="Licenza media"> Licenza media</label>
+            <label><input type="radio" name="istruzione" value="Diploma superiore"> Diploma superiore</label>
+            <label><input type="radio" name="istruzione" value="Laurea triennale"> Laurea triennale</label>
+            <label><input type="radio" name="istruzione" value="Laurea magistrale o superiore"> Laurea magistrale o superiore</label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Occupazione</label>
+          <div class="radio-group" id="occupazione">
+            <label><input type="radio" name="occupazione" value="Studente"> Studente</label>
+            <label><input type="radio" name="occupazione" value="Lavoratore dipendente"> Lavoratore dipendente</label>
+            <label><input type="radio" name="occupazione" value="Lavoratore autonomo"> Lavoratore autonomo</label>
+            <label><input type="radio" name="occupazione" value="Non occupato"> Non occupato</label>
+            <label><input type="radio" name="occupazione" value="Pensionato"> Pensionato</label>
+            <label><input type="radio" name="occupazione" value="Altro"> Altro</label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Situazione abitativa</label>
+          <div class="radio-group" id="abitativa">
+            <label><input type="radio" name="abitativa" value="Con la famiglia di origine"> Con la famiglia di origine</label>
+            <label><input type="radio" name="abitativa" value="Da solo/a"> Da solo/a</label>
+            <label><input type="radio" name="abitativa" value="Con partner/coniuge"> Con partner / coniuge</label>
+            <label><input type="radio" name="abitativa" value="Con coinquilini"> Con coinquilini</label>
+            <label><input type="radio" name="abitativa" value="Altro"> Altro</label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Chi cucina i pasti in casa?</label>
+          <div class="radio-group" id="cucina">
+            <label><input type="radio" name="cucina" value="Io stesso/a"> Io stesso/a</label>
+            <label><input type="radio" name="cucina" value="Un familiare"> Un familiare</label>
+            <label><input type="radio" name="cucina" value="Nessuno – mangio fuori o con consegne a domicilio"> Nessuno – mangio fuori o con consegne a domicilio</label>
+            <label><input type="radio" name="cucina" value="Misto"> Misto</label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Numero di pasti fuori casa a settimana</label>
+          <input type="number" id="pasti_fuori" min="0" max="21" placeholder="es. 3">
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Utilizzo di app di food delivery</label>
+          <div class="radio-group" id="delivery">
+            <label><input type="radio" name="delivery" value="Mai"> Mai</label>
+            <label><input type="radio" name="delivery" value="Occasionale (1-3 volte al mese)"> Occasionale (1–3 volte al mese)</label>
+            <label><input type="radio" name="delivery" value="Frequente (1 o più volte a settimana)"> Frequente (1 o più volte a settimana)</label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Reddito familiare percepito</label>
+          <div class="radio-group" id="reddito">
+            <label><input type="radio" name="reddito" value="Basso (difficoltà ad arrivare a fine mese)"> Basso (difficoltà ad arrivare a fine mese)</label>
+            <label><input type="radio" name="reddito" value="Medio"> Medio</label>
+            <label><input type="radio" name="reddito" value="Alto"> Alto</label>
+            <label><input type="radio" name="reddito" value="Preferisco non rispondere"> Preferisco non rispondere</label>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 2: SALUTE ORALE + SING -->
+  <div class="page" id="page2">
+    <div class="error-msg" id="err2"></div>
+    <div class="section-block">
+      <div class="section-title">Sezione 2 — Salute Orale e Abitudini</div>
+      <div class="section-body">
+
+        <div class="q-block">
+          <label class="q-label">Con quale frequenza si spazzola i denti?</label>
+          <div class="radio-group" id="spazzolamento">
+            <label><input type="radio" name="spazzolamento" value="Meno di 1 volta al giorno"> Meno di 1 volta al giorno</label>
+            <label><input type="radio" name="spazzolamento" value="1 volta al giorno"> 1 volta al giorno</label>
+            <label><input type="radio" name="spazzolamento" value="2 volte al giorno"> 2 volte al giorno</label>
+            <label><input type="radio" name="spazzolamento" value="3 o più volte al giorno"> 3 o più volte al giorno</label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Che tipo di spazzolino utilizza?</label>
+          <div class="radio-group" id="tipo_spazzolino">
+            <label><input type="radio" name="tipo_spazzolino" value="Manuale"> Manuale</label>
+            <label><input type="radio" name="tipo_spazzolino" value="Elettrico"> Elettrico</label>
+            <label><input type="radio" name="tipo_spazzolino" value="Entrambi"> Entrambi</label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Usa scovolini o filo interdentale?</label>
+          <div class="radio-group" id="scovolini">
+            <label><input type="radio" name="scovolini" value="No"> No</label>
+            <label><input type="radio" name="scovolini" value="Sì, occasionalmente"> Sì, occasionalmente</label>
+            <label><input type="radio" name="scovolini" value="Sì, ogni giorno"> Sì, ogni giorno</label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Ultima visita dal dentista</label>
+          <div class="radio-group" id="dentista">
+            <label><input type="radio" name="dentista" value="Meno di 6 mesi fa"> Meno di 6 mesi fa</label>
+            <label><input type="radio" name="dentista" value="6–12 mesi fa"> 6–12 mesi fa</label>
+            <label><input type="radio" name="dentista" value="Più di 1 anno fa"> Più di 1 anno fa</label>
+            <label><input type="radio" name="dentista" value="Mai"> Mai</label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Ha mai ricevuto una diagnosi di parodontite (piorrea)?</label>
+          <div class="radio-group" id="diagnosi_parodontite">
+            <label><input type="radio" name="diagnosi_parodontite" value="No"> No</label>
+            <label><input type="radio" name="diagnosi_parodontite" value="Sì"> Sì</label>
+            <label><input type="radio" name="diagnosi_parodontite" value="Non so"> Non so</label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Ha mai eseguito una terapia professionale per trattare la parodontite?<br>
+            <span style="font-size:0.8rem;color:var(--text-muted);font-family:sans-serif;">(es. levigatura radicolare, chirurgia parodontale)</span></label>
+          <div class="radio-group" id="terapia_parodontite">
+            <label><input type="radio" name="terapia_parodontite" value="No"> No</label>
+            <label><input type="radio" name="terapia_parodontite" value="Sì"> Sì</label>
+            <label><input type="radio" name="terapia_parodontite" value="Non so"> Non so</label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Abitudine al fumo</label>
+          <div class="radio-group" id="fumo">
+            <label><input type="radio" name="fumo" value="Non fumatore/trice"> Non fumatore/trice</label>
+            <label><input type="radio" name="fumo" value="Ex fumatore/trice"> Ex fumatore/trice</label>
+            <label><input type="radio" name="fumo" value="Fumatore/trice attuale"> Fumatore/trice attuale</label>
+          </div>
+        </div>
+
+        <div class="q-block" id="sigarette_block" style="display:none">
+          <label class="q-label">Quante sigarette fuma al giorno?</label>
+          <input type="number" id="sigarette" min="1" max="100" placeholder="es. 10">
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Assume farmaci che influenzano il cavo orale?<br>
+            <span style="font-size:0.8rem;color:var(--text-muted);font-family:sans-serif;">(es. antiepilettici, calcio-antagonisti, immunosoppressori, contraccettivi orali)</span></label>
+          <div class="radio-group" id="farmaci">
+            <label><input type="radio" name="farmaci" value="No"> No</label>
+            <label><input type="radio" name="farmaci" value="Sì"> Sì</label>
+            <label><input type="radio" name="farmaci" value="Non so"> Non so</label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Diabete o prediabete</label>
+          <div class="radio-group" id="diabete">
+            <label><input type="radio" name="diabete" value="No"> No</label>
+            <label><input type="radio" name="diabete" value="Sì – diabete"> Sì – diabete</label>
+            <label><input type="radio" name="diabete" value="Sì – prediabete"> Sì – prediabete</label>
+            <label><input type="radio" name="diabete" value="Non so"> Non so</label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Soffre di altre malattie sistemiche (oltre al diabete)?<br>
+            <span style="font-size:0.8rem;color:var(--text-muted);font-family:sans-serif;">(es. malattie cardiovascolari, ipertensione, malattie autoimmuni, osteoporosi, malattie renali)</span></label>
+          <div class="radio-group" id="malattie_sistemiche">
+            <label><input type="radio" name="malattie_sistemiche" value="No"> No</label>
+            <label><input type="radio" name="malattie_sistemiche" value="Sì"> Sì</label>
+            <label><input type="radio" name="malattie_sistemiche" value="Non so"> Non so</label>
+          </div>
+        </div>
+
+        <div class="q-block" id="malattie_quali_block" style="display:none">
+          <label class="q-label">Se sì, quali?</label>
+          <textarea id="malattie_quali" rows="3" placeholder="Scriva qui le malattie di cui soffre"></textarea>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Gravidanza in corso</label>
+          <div class="radio-group" id="gravidanza">
+            <label><input type="radio" name="gravidanza" value="No"> No</label>
+            <label><input type="radio" name="gravidanza" value="Sì"> Sì</label>
+            <label><input type="radio" name="gravidanza" value="Non applicabile"> Non applicabile</label>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-title">Sezione 2b — Questionario Salute Gengivale (SING)</div>
+      <div class="section-body">
+
+        <div class="q-block">
+          <label class="q-label">Ha avuto sanguinamento dalle gengive mentre si spazzola i denti?
+            <span style="display:block;font-size:0.8rem;color:var(--text-muted);font-family:sans-serif;margin-top:2px;">(Le gengive Le sanguinano quando si spazzola?)</span>
+          </label>
+          <div class="radio-group" id="sing_binary">
+            <label><input type="radio" name="sing_binary" value="Sì"> Sì</label>
+            <label><input type="radio" name="sing_binary" value="No"> No</label>
+            <label><input type="radio" name="sing_binary" value="Non so"> Non so</label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Con quale frequenza ha avuto sanguinamento dalle gengive mentre si spazzola i denti?</label>
+          <div class="radio-group" id="sing_likert">
+            <label><input type="radio" name="sing_likert" value="1 – Mai"> 1 – Mai</label>
+            <label><input type="radio" name="sing_likert" value="2 – Quasi mai"> 2 – Quasi mai</label>
+            <label><input type="radio" name="sing_likert" value="3 – Occasionalmente"> 3 – Occasionalmente</label>
+            <label><input type="radio" name="sing_likert" value="4 – Abbastanza spesso"> 4 – Abbastanza spesso</label>
+            <label><input type="radio" name="sing_likert" value="5 – Molto spesso"> 5 – Molto spesso</label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Ha avuto alito cattivo?</label>
+          <div class="radio-group" id="sing_alito">
+            <label><input type="radio" name="sing_alito" value="1 – Mai"> 1 – Mai</label>
+            <label><input type="radio" name="sing_alito" value="2 – Quasi mai"> 2 – Quasi mai</label>
+            <label><input type="radio" name="sing_alito" value="3 – Occasionalmente"> 3 – Occasionalmente</label>
+            <label><input type="radio" name="sing_alito" value="4 – Abbastanza spesso"> 4 – Abbastanza spesso</label>
+            <label><input type="radio" name="sing_alito" value="5 – Molto spesso"> 5 – Molto spesso</label>
+          </div>
+        </div>
+
+        <div class="q-block">
+          <label class="q-label">Ha avuto un sapore sgradevole in bocca mentre si spazzola i denti?</label>
+          <div class="radio-group" id="sing_sapore">
+            <label><input type="radio" name="sing_sapore" value="1 – Mai"> 1 – Mai</label>
+            <label><input type="radio" name="sing_sapore" value="2 – Quasi mai"> 2 – Quasi mai</label>
+            <label><input type="radio" name="sing_sapore" value="3 – Occasionalmente"> 3 – Occasionalmente</label>
+            <label><input type="radio" name="sing_sapore" value="4 – Abbastanza spesso"> 4 – Abbastanza spesso</label>
+            <label><input type="radio" name="sing_sapore" value="5 – Molto spesso"> 5 – Molto spesso</label>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 3: NFFQ -->
+  <div class="page" id="page3">
+    <div class="error-msg" id="err3"></div>
+    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:18px;font-family:sans-serif;line-height:1.5;">
+      Per ogni alimento indicare: <strong>con quale frequenza</strong> lo consuma e <strong>la porzione abituale</strong> rispetto alla porzione di riferimento indicata.
+    </p>
+    <div class="categoria-nav" id="catNav"></div>
+    <div id="foodSections"></div>
+  </div>
+
+  <!-- PAGE 4: SUCCESS -->
+  <div class="page" id="page4">
+    <div class="success-screen" id="sendingScreen" style="display:none">
+      <div class="check" style="background:var(--green-mid)">⏳</div>
+      <h2 style="color:var(--text-muted)">Invio in corso...</h2>
+      <p>Le risposte vengono inviate in modo sicuro. Attendere prego.</p>
+    </div>
+    <div class="success-screen" id="successScreen" style="display:none">
+      <div class="check">✓</div>
+      <h2>Questionario inviato!</h2>
+      <p>Grazie per aver completato il questionario.<br>Le sue risposte sono state ricevute correttamente.</p>
+      <p style="font-size:0.8rem;color:var(--text-muted);margin-top:10px;">Può chiudere questa pagina.</p>
+    </div>
+    <div class="success-screen" id="errorScreen" style="display:none">
+      <div class="check" style="background:var(--warn)">✗</div>
+      <h2 style="color:var(--warn)">Errore nell'invio</h2>
+      <p id="errorMsg">Si è verificato un errore. Riprovare.</p>
+      <button class="btn btn-next" style="margin-top:16px" onclick="retrySend()">Riprova</button>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<div class="nav-bar" id="navBar">
+  <button class="btn btn-prev" id="btnPrev" onclick="goPage(-1)" disabled>← Indietro</button>
+  <span class="step-indicator" id="stepInd">Passo 1 di 3</span>
+  <button class="btn btn-next" id="btnNext" onclick="goPage(1)">Avanti →</button>
+</div>
+
+<script>
+// ===== FOOD DATA =====
+const categories = [
+  {
+    name: "Frutta e frutta secca",
+    foods: [
+      { id:"f01", label:"Frutta", detail:"(fresca, tagliata, frullata, surgelata)", ref:"150 g (es. 1 mela, 1 arancio, 2 mandarini)" },
+      { id:"f02", label:"Succhi 100% frutta", detail:"(freschi o pastorizzati, senza aggiunta di zuccheri)", ref:"200 mL (1 bicchiere medio)" },
+      { id:"f03", label:"Succhi di frutta/nettari", detail:"(con aggiunta di zuccheri o altri ingredienti)", ref:"200 mL (1 bicchiere medio)" },
+      { id:"f04", label:"Frutta sciroppata", detail:"", ref:"150 g (es. 3 mezze pesche sciroppate)" },
+      { id:"f05", label:"Frutta essiccata", detail:"(es. albicocche, prugne, fichi, datteri)", ref:"30 g (es. 3 fichi secchi, 2 cucchiai di uvetta)" },
+      { id:"f06", label:"Frutta secca e semi", detail:"(senza aggiunta di sale, zucchero o altri ingredienti)", ref:"30 g (es. 7-8 noci, 15-20 mandorle)" },
+      { id:"f07", label:"Frutta secca e semi", detail:"(con aggiunta di sale, zucchero o altri ingredienti)", ref:"30 g (es. 15-20 mandorle/nocciole)" },
+      { id:"f08", label:"Olive da tavola", detail:"", ref:"35 g (es. 5 olive)" },
+    ]
+  },
+  {
+    name: "Verdura e legumi",
+    foods: [
+      { id:"v01", label:"Verdure e funghi", detail:"(freschi, cotti, surgelati senza ingredienti aggiunti)", ref:"200 g (es. 2-3 pomodori, 1 finocchio, ½ piatto spinaci)" },
+      { id:"v02", label:"Verdure pronte da scaldare/cuocere", detail:"(con ingredienti aggiunti)", ref:"200 g (es. ½ piatto di spinaci con formaggi)" },
+      { id:"v03", label:"Insalata", detail:"", ref:"80 g (es. 1 scodella/ciotola grande)" },
+      { id:"v04", label:"Succhi 100% verdura", detail:"(freschi o pastorizzati, senza aggiunta di zuccheri)", ref:"200 mL (1 bicchiere medio)" },
+      { id:"v05", label:"Verdure in lattina o in bottiglia", detail:"(es. salsa di pomodoro, sottaceti)", ref:"150 g (es. 1 bicchiere piccolo di salsa di pomodoro)" },
+      { id:"v06", label:"Verdure sott'olio", detail:"", ref:"50 g (es. 2-3 carciofini, 3-4 pomodori secchi)" },
+      { id:"v07", label:"Legumi freschi", detail:"(es. fagioli, piselli, lenticchie)", ref:"150 g (½ piatto)" },
+      { id:"v08", label:"Legumi secchi", detail:"", ref:"50 g (3-4 cucchiai)" },
+      { id:"v09", label:"Legumi in lattina", detail:"(con aggiunta di sale o altri ingredienti)", ref:"150 g (es. 1 scatola piccola)" },
+    ]
+  },
+  {
+    name: "Cereali e tuberi",
+    foods: [
+      { id:"c01", label:"Cereali in chicco", detail:"(es. riso, farro, orzo, grano)", ref:"80 g (1 piatto medio)" },
+      { id:"c02", label:"Pasta", detail:"", ref:"80 g (1 piatto medio)" },
+      { id:"c03", label:"Pasta fresca", detail:"(con o senza uovo)", ref:"125 g (1 piatto medio)" },
+      { id:"c04", label:"Pasta ripiena", detail:"(fatta in casa o artigianale, es. tortellini)", ref:"125 g (1 piatto medio)" },
+      { id:"c05", label:"Lasagne", detail:"(fatte in casa o artigianali)", ref:"250 g (1 piatto medio)" },
+      { id:"c06", label:"Pasta pronta da scaldare/cuocere", detail:"(inclusa pasta ripiena, lasagne)", ref:"180 g (1 porzione standard)" },
+      { id:"c07", label:"Polenta", detail:"", ref:"150 g (1 piatto medio)" },
+      { id:"c08", label:"Cous-cous, semolino", detail:"", ref:"40 g (1 piatto medio)" },
+      { id:"c09", label:"Pane fresco e panini", detail:"(fatti in casa o artigianali)", ref:"50 g (es. 1 piccolo panino, 1 fetta media di pagnotta)" },
+      { id:"c10", label:"Pane e panini confezionati", detail:"(es. pancarrè)", ref:"50 g (es. 2-3 fette, 1 piccolo panino)" },
+      { id:"c11", label:"Sostituti del pane", detail:"(es. crackers, taralli, grissini, friselle, fette biscottate)", ref:"30 g (es. 3-4 fette biscottate, 1 pacchetto crackers)" },
+      { id:"c12", label:"Tramezzini, sandwich", detail:"(confezionati)", ref:"80 g (es. 1 tramezzino)" },
+      { id:"c13", label:"Pizza, focaccia", detail:"(fresca o artigianale)", ref:"350 g (es. 1 pizza)" },
+      { id:"c14", label:"Pizza, focaccia", detail:"(pronta da scaldare/cuocere)", ref:"350 g (es. 1 pizza)" },
+      { id:"c15", label:"Torte salate, rustici", detail:"(freschi, artigianali)", ref:"150 g (1 fetta media)" },
+      { id:"c16", label:"Torte salate, rustici", detail:"(confezionate)", ref:"150 g (1 fetta media)" },
+      { id:"c17", label:"Noodles, riso o zuppe istantanee", detail:"", ref:"90 g (1 porzione)" },
+      { id:"c18", label:"Fiocchi/granola di cereali con frutta secca", detail:"(senza zuccheri aggiunti)", ref:"30 g (es. 6-8 cucchiai di fiocchi)" },
+      { id:"c19", label:"Cereali per la colazione e barrette di cereali", detail:"(con zucchero o altri ingredienti)", ref:"30 g (es. 6-8 cucchiai)" },
+      { id:"c20", label:"Tuberi e radici amidacee", detail:"(es. patate, cassava)", ref:"200 g (2 patate piccole)" },
+      { id:"c21", label:"Patatine, crocchette di patate e simili", detail:"(pronte da scaldare/cuocere)", ref:"150 g (1 piatto medio)" },
+      { id:"c22", label:"Gnocchi", detail:"(freschi, artigianali)", ref:"150 g (1 piatto medio)" },
+      { id:"c23", label:"Gnocchi", detail:"(confezionati)", ref:"150 g (1 piatto medio)" },
+    ]
+  },
+  {
+    name: "Carne e pesce",
+    foods: [
+      { id:"m01", label:"Carne e pollame", detail:"(fresca o surgelata senza altri ingredienti)", ref:"100 g (es. 1 fettina di carne, 1 piccola coscia di pollo)" },
+      { id:"m02", label:"Affettati, salumi e carne affumicata", detail:"(inclusi se usati per preparare panini)", ref:"50 g (es. 3-4 fette medie di prosciutto)" },
+      { id:"m03", label:"Cotolette, nuggets e bastoncini di carne", detail:"", ref:"100 g (es. 5-6 nuggets di pollo)" },
+      { id:"m04", label:"Salsicce, wurstel, hamburger e prodotti a base di carne ricostituita", detail:"(es. carne in scatola)", ref:"100 g (es. 1 salsiccia, 1 hamburger)" },
+      { id:"m05", label:"Pesce, crostacei e molluschi", detail:"(freschi o surgelati)", ref:"150 g (es. 1 piccolo pesce, 1 filetto medio)" },
+      { id:"m06", label:"Pesce affumicato, essiccato o in salamoia", detail:"", ref:"50 g (es. 4-5 fette sottili di salmone affumicato)" },
+      { id:"m07", label:"Pesce in lattina o in vetro al naturale", detail:"(con o senza conservanti)", ref:"50 g (es. 1 scatoletta piccola di tonno)" },
+      { id:"m08", label:"Pesce in lattina o in vetro in olio", detail:"(con o senza conservanti)", ref:"50 g (es. 1 scatoletta piccola di tonno)" },
+      { id:"m09", label:"Bastoncini di pesce, nuggets", detail:"", ref:"100 g (es. 4 bastoncini di pesce)" },
+    ]
+  },
+  {
+    name: "Latte, latticini e uova",
+    foods: [
+      { id:"l01", label:"Latte", detail:"(pastorizzato o a lunga conservazione)", ref:"125 mL (es. 1 bicchiere piccolo, ½ tazza media)" },
+      { id:"l02", label:"Bevande a base latte", detail:"", ref:"100 mL (es. 1 vasetto)" },
+      { id:"l03", label:"Yogurt bianco", detail:"", ref:"125 g (es. 1 vasetto)" },
+      { id:"l04", label:"Yogurt alla frutta o altri gusti", detail:"(es. caffè, vaniglia)", ref:"125 g (es. 1 vasetto)" },
+      { id:"l05", label:"Formaggi molli", detail:"(inclusi se usati per preparare panini)", ref:"100 g (es. 1 mozzarella piccola)" },
+      { id:"l06", label:"Formaggi duri", detail:"(inclusi se usati per preparare panini)", ref:"50 g (es. 2 fette di pecorino)" },
+      { id:"l07", label:"Formaggi fusi", detail:"(inclusi se usati per preparare panini)", ref:"30 g (es. 1 sottiletta, 1 formaggino)" },
+      { id:"l08", label:"Formaggio per condimento", detail:"(es. grana, parmigiano, pecorino)", ref:"10 g (1 cucchiaio)" },
+      { id:"l09", label:"Panna", detail:"", ref:"10 mL (1 cucchiaio)" },
+      { id:"l10", label:"Uova", detail:"(incluse se usate per frittate o per farcire panini)", ref:"50 g (1 uovo)" },
+    ]
+  },
+  {
+    name: "Oli, grassi e condimenti",
+    foods: [
+      { id:"o01", label:"Oli di oliva o di semi", detail:"", ref:"10 mL (1 cucchiaino)" },
+      { id:"o02", label:"Burro", detail:"(incluso il burro per la pasta in bianco)", ref:"10 g (½ noce, 1 confezione alberghiera)" },
+      { id:"o03", label:"Lardo", detail:"", ref:"10 g (½ noce)" },
+      { id:"o04", label:"Margarine", detail:"", ref:"10 g (½ noce, 1 confezione alberghiera)" },
+      { id:"o05", label:"Salse fatte in casa", detail:"(es. maionese, ketchup)", ref:"18 g (1 cucchiaio colmo)" },
+      { id:"o06", label:"Salse pronte", detail:"(es. maionese, ketchup)", ref:"18 g (1 cucchiaio colmo)" },
+      { id:"o07", label:"Sughi fatti in casa", detail:"(es. pesto, ragù)", ref:"50 g (1 porzione)" },
+      { id:"o08", label:"Sughi pronti", detail:"(es. pesto, ragù)", ref:"50 g (1 porzione)" },
+    ]
+  },
+  {
+    name: "Dolci e dolcificanti",
+    foods: [
+      { id:"d01", label:"Biscotti", detail:"(fatti in casa, artigianali)", ref:"30 g (es. 2-3 frollini, 4-5 biscotti secchi)" },
+      { id:"d02", label:"Biscotti", detail:"(confezionati)", ref:"30 g (es. 2-3 frollini, 4-5 biscotti secchi)" },
+      { id:"d03", label:"Torte, dolci al cucchiaio", detail:"(fatte in casa, artigianali)", ref:"100 g (1 fetta piccola, 1 coppetta)" },
+      { id:"d04", label:"Torte, dolci al cucchiaio", detail:"(confezionate)", ref:"100 g (1 fetta piccola, 1 coppetta)" },
+      { id:"d05", label:"Croissant, merendine", detail:"(confezionate)", ref:"50 g (1 pezzo)" },
+      { id:"d06", label:"Gelati", detail:"(freschi o artigianali)", ref:"100 g (1 coppetta)" },
+      { id:"d07", label:"Gelati confezionati", detail:"(es. cono, stecco, vaschetta)", ref:"70 g (1 cono, 1 stecco, 1 coppetta)" },
+      { id:"d08", label:"Cioccolato", detail:"", ref:"30 g (es. 2-3 cioccolatini)" },
+      { id:"d09", label:"Caramelle", detail:"", ref:"10 g (es. 2-3 caramelle)" },
+      { id:"d10", label:"Creme spalmabili", detail:"(es. di nocciole, di pistacchi)", ref:"15 g (1 cucchiaino)" },
+      { id:"d11", label:"Marmellate e confetture", detail:"", ref:"20 g (2 cucchiaini)" },
+      { id:"d12", label:"Zucchero, melassa", detail:"", ref:"5 g (1 cucchiaino)" },
+      { id:"d13", label:"Miele, sciroppo d'acero", detail:"", ref:"10 g (1 cucchiaino)" },
+    ]
+  },
+  {
+    name: "Bevande",
+    foods: [
+      { id:"b01", label:"Tè, infusi o tisane", detail:"", ref:"125 mL (1 tazza piccola)" },
+      { id:"b02", label:"Caffè", detail:"", ref:"30 mL (1 tazzina)" },
+      { id:"b03", label:"Soft drinks", detail:"(es. tè freddo, cola, chinotto, analcolici per aperitivo)", ref:"330 mL (1 lattina)" },
+      { id:"b04", label:"Bevande energetiche", detail:"", ref:"200 mL (1 bicchiere medio)" },
+      { id:"b05", label:"Bevande a base di cacao", detail:"(es. cioccolata calda)", ref:"125 mL (bicchiere)" },
+      { id:"b06", label:"Vino", detail:"", ref:"125 mL (bicchiere)" },
+      { id:"b07", label:"Birra", detail:"", ref:"330 mL (1 lattina)" },
+      { id:"b08", label:"Altre bevande alcoliche", detail:"(es. rum, gin, grappa, amari)", ref:"40 mL" },
+    ]
+  },
+  {
+    name: "Altro",
+    foods: [
+      { id:"a01", label:"Snack dolci o salati confezionati", detail:"", ref:"30 g (es. 1 barretta, 1 sacchetto di patatine piccolo)" },
+      { id:"a02", label:"Bevande vegetali", detail:"(es. bevande a base di soia)", ref:"125 mL (1 bicchiere, ½ tazza)" },
+      { id:"a03", label:"Yogurt vegetali", detail:"(es. yogurt a base di soia)", ref:"125 g (1 vasetto)" },
+      { id:"a04", label:"Sostituti vegetali dei formaggi", detail:"(es. tofu)", ref:"100 g (1 porzione)" },
+      { id:"a05", label:"Sostituti vegetali della carne", detail:"(es. burger vegetali)", ref:"100 g (es. 1 burger, 1 cotoletta)" },
+      { id:"a06", label:"Bevande, shake in polvere e sostitutivi del pasto", detail:"(incluse barrette)", ref:"25 g (2 cucchiai di prodotto in polvere, 1 barretta)" },
+    ]
+  }
+];
+
+const freqOptions = [
+  "Mai o meno di 1 volta al mese",
+  "1-3 volte al mese",
+  "1 volta a settimana",
+  "2 volte a settimana",
+  "3 volte a settimana",
+  "4 volte a settimana",
+  "5 volte a settimana",
+  "6 volte a settimana",
+  "Tutti i giorni"
+];
+
+const portionOptions = ["0,5", "1", "1,5", "2", "2,5", "3"];
+
+// ===== BUILD FOOD SECTION =====
+function buildFoodSection() {
+  const container = document.getElementById('foodSections');
+  const nav = document.getElementById('catNav');
+  let globalNum = 1;
+
+  categories.forEach((cat, ci) => {
+    // Nav button
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn';
+    btn.id = 'catbtn_' + ci;
+    btn.textContent = cat.name;
+    btn.onclick = () => {
+      document.getElementById('cat_' + ci).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    nav.appendChild(btn);
+
+    // Section
+    const sec = document.createElement('div');
+    sec.className = 'section-block';
+    sec.id = 'cat_' + ci;
+    sec.innerHTML = `<div class="section-title">${cat.name}</div><div class="section-body" id="catbody_${ci}"></div>`;
+    container.appendChild(sec);
+
+    const body = document.getElementById('catbody_' + ci);
+
+    cat.foods.forEach((food, fi) => {
+      const card = document.createElement('div');
+      card.className = 'food-card';
+      card.id = 'card_' + food.id;
+
+      let freqHTML = '';
+      freqOptions.forEach(opt => {
+        const isDaily = opt === "Tutti i giorni";
+        freqHTML += `<label>
+          <input type="radio" name="freq_${food.id}" value="${opt}" ${isDaily ? `onchange="toggleDaily('${food.id}', this)"` : `onchange="toggleDaily('${food.id}', this)"`}>
+          ${opt}
+        </label>`;
+      });
+
+      let portHTML = '';
+      portionOptions.forEach(p => {
+        portHTML += `<label id="portlabel_${food.id}_${p.replace(',','_')}">
+          <input type="radio" name="port_${food.id}" value="${p}" onchange="markPortionSelected('${food.id}', '${p}')">
+          ${p}×
+        </label>`;
+      });
+
+      card.innerHTML = `
+        <div class="food-card-header">
+          <span class="food-num">${globalNum}</span>
+          <span><strong>${food.label}</strong>${food.detail ? ' <span style="font-weight:normal;font-size:0.85rem;color:var(--text-muted);">' + food.detail + '</span>' : ''}</span>
+        </div>
+        <div class="food-card-body">
+          <div class="freq-grid">${freqHTML}</div>
+          <div class="daily-input" id="daily_${food.id}">
+            <label>Quante volte al giorno?</label>
+            <input type="number" id="dailyval_${food.id}" min="1" max="20" placeholder="es. 2">
+          </div>
+          <div class="portion-label">Porzione di riferimento: <strong>${food.ref}</strong></div>
+          <div class="portion-grid">${portHTML}</div>
+        </div>`;
+
+      body.appendChild(card);
+      globalNum++;
+    });
+  });
+}
+
+function toggleDaily(id, radio) {
+  const div = document.getElementById('daily_' + id);
+  if (radio.value === 'Tutti i giorni') {
+    div.classList.add('show');
+  } else {
+    div.classList.remove('show');
+    const inp = document.getElementById('dailyval_' + id);
+    if (inp) inp.value = '';
+  }
+}
+
+function markPortionSelected(id, val) {
+  portionOptions.forEach(p => {
+    const lbl = document.getElementById('portlabel_' + id + '_' + p.replace(',','_'));
+    if (lbl) lbl.classList.toggle('selected', p === val);
+  });
+}
+
+// ===== GOOGLE SHEET URL =====
+// INCOLLA QUI L'URL del tuo Google Apps Script dopo averlo pubblicato:
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz33NraWtc-PPwKgpvSGPGAZM7pwotoW91f-HMv2-AhiMQcV17bKhVi7QMgEeGCs6Tt/exec';
+
+// ===== NAVIGATION =====
+let currentPage = 1;
+const totalPages = 3;
+let lastRowData = null;
+
+function updateProgress() {
+  const pct = ((currentPage - 1) / totalPages) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+  const labels = ['Sezione 1 di 3 — Dati anagrafici e sociodemografici', 'Sezione 2 di 3 — Salute orale', 'Sezione 3 di 3 — Questionario alimentare NFFQ'];
+  document.getElementById('progressLabel').textContent = labels[currentPage - 1] || 'Completato';
+  document.getElementById('stepInd').textContent = `Passo ${currentPage} di ${totalPages}`;
+  document.getElementById('btnPrev').disabled = currentPage === 1;
+  document.getElementById('btnNext').textContent = currentPage === totalPages ? 'Invia questionario ✓' : 'Avanti →';
+}
+
+function goPage(dir) {
+  if (dir === 1 && !validatePage(currentPage)) return;
+  if (dir === 1 && currentPage === totalPages) {
+    sendData(); return;
+  }
+  document.getElementById('page' + currentPage).classList.remove('active');
+  currentPage += dir;
+  document.getElementById('page' + currentPage).classList.add('active');
+  updateProgress();
+  window.scrollTo(0, 0);
+}
+
+function showSuccess() {
+  document.getElementById('page' + currentPage).classList.remove('active');
+  document.getElementById('page4').classList.add('active');
+  document.getElementById('navBar').style.display = 'none';
+  document.getElementById('progressBar').style.width = '100%';
+  document.getElementById('progressLabel').textContent = 'Completato!';
+}
+
+// ===== SEND DATA =====
+function collectRow() {
+  const row = {};
+  const now = new Date();
+  row['Data compilazione'] = now.toLocaleString('it-IT');
+  row['Nominativo'] = getInput('nominativo');
+  row['Email'] = getInput('email');
+  row['Età'] = getInput('eta');
+  row['Sesso'] = getRadio('sesso');
+  row['Stato civile'] = getRadio('stato_civile');
+  row['Nazionalità'] = getInput('nazionalita');
+  row['Area residenza'] = getRadio('residenza');
+  row['Istruzione'] = getRadio('istruzione');
+  row['Occupazione'] = getRadio('occupazione');
+  row['Situazione abitativa'] = getRadio('abitativa');
+  row['Chi cucina'] = getRadio('cucina');
+  row['Pasti fuori casa/settimana'] = getInput('pasti_fuori');
+  row['Food delivery'] = getRadio('delivery');
+  row['Reddito percepito'] = getRadio('reddito');
+  row['Frequenza spazzolamento'] = getRadio('spazzolamento');
+  row['Tipo spazzolino'] = getRadio('tipo_spazzolino');
+  row['Scovolini/filo interdentale'] = getRadio('scovolini');
+  row['Ultima visita dentista'] = getRadio('dentista');
+  row['Diagnosi parodontite'] = getRadio('diagnosi_parodontite');
+  row['Terapia parodontale professionale'] = getRadio('terapia_parodontite');
+  row['Fumo'] = getRadio('fumo');
+  row['Sigarette/die'] = getInput('sigarette');
+  row['Farmaci cavo orale'] = getRadio('farmaci');
+  row['Diabete'] = getRadio('diabete');
+  row['Altre malattie sistemiche'] = getRadio('malattie_sistemiche');
+  row['Altre malattie sistemiche – quali'] = getInput('malattie_quali');
+  row['Gravidanza'] = getRadio('gravidanza');
+  row['SING – Sanguinamento (Sì/No)'] = getRadio('sing_binary');
+  row['SING – Sanguinamento (Likert 1-5)'] = getRadio('sing_likert');
+  row['SING – Alito cattivo (Likert 1-5)'] = getRadio('sing_alito');
+  row['SING – Sapore sgradevole (Likert 1-5)'] = getRadio('sing_sapore');
+  categories.forEach(cat => {
+    cat.foods.forEach(food => {
+      const label = food.label + (food.detail ? ' ' + food.detail : '');
+      row[`[FREQ] ${label}`] = getRadio('freq_' + food.id);
+      const dailyEl = document.getElementById('dailyval_' + food.id);
+      row[`[FREQ-GIORNO] ${label}`] = dailyEl ? dailyEl.value : '';
+      row[`[PORZIONE] ${label}`] = getRadio('port_' + food.id);
+    });
+  });
+  return row;
+}
+
+function sendData() {
+  if (SCRIPT_URL === 'INSERISCI_QUI_URL_APPS_SCRIPT') {
+    alert('⚠️ URL Google Apps Script non configurato.\nSeguire le istruzioni nel file delle istruzioni.');
+    return;
+  }
+  lastRowData = collectRow();
+  showSuccess();
+  document.getElementById('sendingScreen').style.display = 'block';
+
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(lastRowData)
+  })
+  .then(() => {
+    document.getElementById('sendingScreen').style.display = 'none';
+    document.getElementById('successScreen').style.display = 'block';
+  })
+  .catch(err => {
+    document.getElementById('sendingScreen').style.display = 'none';
+    document.getElementById('errorScreen').style.display = 'block';
+    document.getElementById('errorMsg').textContent = 'Errore di rete: ' + err.message;
+  });
+}
+
+function retrySend() {
+  document.getElementById('errorScreen').style.display = 'none';
+  document.getElementById('sendingScreen').style.display = 'block';
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(lastRowData)
+  })
+  .then(() => {
+    document.getElementById('sendingScreen').style.display = 'none';
+    document.getElementById('successScreen').style.display = 'block';
+  })
+  .catch(err => {
+    document.getElementById('sendingScreen').style.display = 'none';
+    document.getElementById('errorScreen').style.display = 'block';
+    document.getElementById('errorMsg').textContent = 'Errore: ' + err.message;
+  });
+}
+
+// ===== VALIDATION =====
+function validatePage(page) {
+  const errEl = document.getElementById('err' + page);
+  if (page === 1) {
+    const nome = getInput('nominativo').trim();
+    if (!nome) { showErr(errEl, 'Inserire il nome e cognome.'); return false; }
+    const email = getInput('email').trim();
+    if (!email || !email.includes('@')) { showErr(errEl, 'Inserire un indirizzo email valido.'); return false; }
+    const eta = document.getElementById('eta').value;
+    if (!eta || eta < 18 || eta > 110) { showErr(errEl, 'Inserire un\'età valida (18–110 anni).'); return false; }
+    if (!getRadio('sesso')) { showErr(errEl, 'Selezionare il sesso.'); return false; }
+  }
+  if (errEl) errEl.classList.remove('show');
+  return true;
+}
+
+function showErr(el, msg) {
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function getRadio(name) {
+  const el = document.querySelector(`input[name="${name}"]:checked`);
+  return el ? el.value : '';
+}
+
+function getInput(id) {
+  const el = document.getElementById(id);
+  return el ? el.value : '';
+}
+
+// ===== EXPORT EXCEL =====
+function exportExcel() {
+  const row = {};
+
+  // Section 1
+  row['Età'] = getInput('eta');
+  row['Sesso'] = getRadio('sesso');
+  row['Stato civile'] = getRadio('stato_civile');
+  row['Nazionalità'] = getInput('nazionalita');
+  row['Area residenza'] = getRadio('residenza');
+  row['Istruzione'] = getRadio('istruzione');
+  row['Occupazione'] = getRadio('occupazione');
+  row['Situazione abitativa'] = getRadio('abitativa');
+  row['Chi cucina'] = getRadio('cucina');
+  row['Pasti fuori casa/settimana'] = getInput('pasti_fuori');
+  row['Food delivery'] = getRadio('delivery');
+  row['Reddito percepito'] = getRadio('reddito');
+
+  // Section 2
+  row['Frequenza spazzolamento'] = getRadio('spazzolamento');
+  row['Tipo spazzolino'] = getRadio('tipo_spazzolino');
+  row['Scovolini/filo interdentale'] = getRadio('scovolini');
+  row['Ultima visita dentista'] = getRadio('dentista');
+  row['Diagnosi parodontite'] = getRadio('diagnosi_parodontite');
+  row['Terapia parodontale professionale'] = getRadio('terapia_parodontite');
+  row['Fumo'] = getRadio('fumo');
+  row['Sigarette/die'] = getInput('sigarette');
+  row['Farmaci cavo orale'] = getRadio('farmaci');
+  row['Diabete'] = getRadio('diabete');
+  row['Altre malattie sistemiche'] = getRadio('malattie_sistemiche');
+  row['Altre malattie sistemiche – quali'] = getInput('malattie_quali');
+  row['Gravidanza'] = getRadio('gravidanza');
+
+  // SING
+  row['SING – Sanguinamento gengive (Sì/No)'] = getRadio('sing_binary');
+  row['SING – Sanguinamento gengive (Likert 1-5)'] = getRadio('sing_likert');
+  row['SING – Alito cattivo (Likert 1-5)'] = getRadio('sing_alito');
+  row['SING – Sapore sgradevole (Likert 1-5)'] = getRadio('sing_sapore');
+
+  // NFFQ
+  categories.forEach(cat => {
+    cat.foods.forEach(food => {
+      const label = food.label + (food.detail ? ' ' + food.detail : '');
+      row[`[FREQ] ${label}`] = getRadio('freq_' + food.id);
+      const dailyEl = document.getElementById('dailyval_' + food.id);
+      row[`[FREQ-GIORNO] ${label}`] = dailyEl ? dailyEl.value : '';
+      row[`[PORZIONE] ${label}`] = getRadio('port_' + food.id);
+    });
+  });
+
+  const ws = XLSX.utils.json_to_sheet([row]);
+
+  // Stile intestazioni
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for (let C = range.s.c; C <= range.e.c; C++) {
+    const addr = XLSX.utils.encode_cell({ r: 0, c: C });
+    if (!ws[addr]) continue;
+    ws[addr].s = {
+      font: { bold: true, color: { rgb: "FFFFFF" } },
+      fill: { fgColor: { rgb: "2d6a4f" } },
+      alignment: { wrapText: true, vertical: "center" }
+    };
+  }
+
+  // Larghezze colonne
+  const colWidths = [];
+  for (let C = range.s.c; C <= range.e.c; C++) {
+    const addr0 = XLSX.utils.encode_cell({ r: 0, c: C });
+    const hLen = ws[addr0] ? String(ws[addr0].v).length : 10;
+    colWidths.push({ wch: Math.min(Math.max(hLen, 14), 50) });
+  }
+  ws['!cols'] = colWidths;
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Risposte');
+
+  // Secondo foglio: legenda categorie NFFQ
+  const legend = [];
+  categories.forEach(cat => {
+    cat.foods.forEach(food => {
+      legend.push({
+        'ID': food.id,
+        'Categoria': cat.name,
+        'Alimento': food.label,
+        'Dettaglio': food.detail,
+        'Porzione di riferimento': food.ref
+      });
+    });
+  });
+  const ws2 = XLSX.utils.json_to_sheet(legend);
+  ws2['!cols'] = [{ wch: 6 }, { wch: 25 }, { wch: 35 }, { wch: 45 }, { wch: 45 }];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Legenda NFFQ');
+
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  XLSX.utils.write(wb, { bookType: 'xlsx', type: 'binary' });
+  XLSX.writeFile(wb, `NFFQ_paziente_${dateStr}.xlsx`);
+}
+
+// ===== INIT =====
+document.querySelector('input[name="fumo"]') && document.querySelectorAll('input[name="fumo"]').forEach(r => {
+  r.addEventListener('change', () => {
+    document.getElementById('sigarette_block').style.display =
+      r.value === 'Fumatore/trice attuale' && r.checked ? 'block' : (document.querySelector('input[name="fumo"]:checked')?.value === 'Fumatore/trice attuale' ? 'block' : 'none');
+  });
+});
+
+buildFoodSection();
+updateProgress();
+
+// Portion radio visual
+document.addEventListener('change', function(e) {
+  if (e.target.name && e.target.name.startsWith('port_')) {
+    const id = e.target.name.replace('port_', '');
+    portionOptions.forEach(p => {
+      const lbl = document.getElementById('portlabel_' + id + '_' + p.replace(',','_'));
+      if (lbl) lbl.classList.toggle('selected', e.target.value === p);
+    });
+  }
+});
+
+// Show/hide sigarette e "quali malattie"
+document.addEventListener('change', function(e) {
+  if (e.target.name === 'fumo') {
+    const show = e.target.value === 'Fumatore/trice attuale';
+    document.getElementById('sigarette_block').style.display = show ? 'block' : 'none';
+    if (!show) document.getElementById('sigarette').value = '';
+  }
+  if (e.target.name === 'malattie_sistemiche') {
+    const show = e.target.value === 'Sì';
+    document.getElementById('malattie_quali_block').style.display = show ? 'block' : 'none';
+    if (!show) document.getElementById('malattie_quali').value = '';
+  }
+});
+</script>
+</body>
+</html>
